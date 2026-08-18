@@ -49,16 +49,44 @@ register_all(mcp)
 mcp_app = mcp.streamable_http_app()
 
 
-# ── Full ASGI app (MCP + OAuth routes) ───────────────────────────────────────
+from starlette.responses import JSONResponse
+from pathlib import Path
+
+# ── Health & Readiness Probes ─────────────────────────────────────────────────
+async def health_check(request) -> JSONResponse:
+    """Liveness probe: verifies the HTTP server is running."""
+    return JSONResponse({"status": "healthy", "service": "notifications-mcp"})
+
+
+async def readiness_check(request) -> JSONResponse:
+    """Readiness probe: verifies configured channels and token readiness."""
+    cfg = load_config()
+    mail_cfg = cfg.channels.get("mail")
+    token_ready = Path(mail_cfg.token_path).exists() if mail_cfg else False
+    return JSONResponse(
+        {
+            "status": "ready" if token_ready else "needs_auth",
+            "channels": {
+                "mail": "configured" if token_ready else "unauthenticated"
+            },
+        },
+        status_code=200 if token_ready else 503,
+    )
+
+
+# ── Full ASGI app (MCP + OAuth routes + Health Probes) ───────────────────────
 app = Starlette(
     routes=[
+        # Probes
+        Route("/health",              endpoint=health_check),
+        Route("/ready",               endpoint=readiness_check),
         # Gmail OAuth flow endpoints
         Route("/auth/gmail/start",    endpoint=gmail_oauth_start),
         Route("/auth/gmail/callback", endpoint=gmail_oauth_callback),
         # MCP Streamable HTTP endpoint — all MCP clients connect here
         Mount("/mcp", app=mcp_app),
     ],
-    lifespan=mcp_app.lifespan,
+    lifespan=mcp_app.router.lifespan_context,
 )
 
 
