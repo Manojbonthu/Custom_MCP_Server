@@ -1,40 +1,44 @@
 """
-logging.py — Structured JSON logging setup.
-
-Call setup_logging() once at server startup.
-All loggers across the app will emit JSON lines:
-  {"level": "INFO", "logger": "src.channels.mail.tools", "message": "...", "time": "..."}
+logging.py — Structured JSON logger for security audits and operational tracing.
 """
 
-import logging
 import json
+import logging
 import sys
+from datetime import datetime, timezone
 
 
 class JSONFormatter(logging.Formatter):
-    """Formats log records as single-line JSON strings."""
+    """Formats log records as single-line JSON objects."""
 
     def format(self, record: logging.LogRecord) -> str:
-        log_obj = {
+        log_data = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
-            "time": self.formatTime(record, self.datefmt),
         }
+
+        # Attach extra structured attributes if present
+        for key in ("caller", "session_id", "tool", "ip", "event_type", "security_alert"):
+            if hasattr(record, key):
+                log_data[key] = getattr(record, key)
+
         if record.exc_info:
-            log_obj["exception"] = self.formatException(record.exc_info)
-        return json.dumps(log_obj)
+            log_data["exception"] = self.formatException(record.exc_info)
+
+        return json.dumps(log_data)
 
 
 def setup_logging(level: str = "INFO") -> None:
-    """
-    Configure root logger with JSON output to stdout.
-    Call once at server startup in server.py.
-    """
+    """Configures root logger with JSONFormatter."""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+
+    # Remove existing handlers to avoid duplicates
+    for handler in list(root_logger.handlers):
+        root_logger.removeHandler(handler)
+
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JSONFormatter())
-
-    root = logging.getLogger()
-    root.setLevel(getattr(logging, level.upper(), logging.INFO))
-    root.handlers.clear()
-    root.addHandler(handler)
+    root_logger.addHandler(handler)

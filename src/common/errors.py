@@ -1,74 +1,57 @@
 """
-errors.py — Maps Gmail API exceptions to clean, agent-readable error dicts.
-
-The AI agent receives a structured dict instead of a raw Python traceback.
-This lets the agent understand what went wrong and decide what to do next.
+errors.py — Standard JSON-RPC 2.0 error representations and sanitization helpers.
+Ensures zero stack trace leakage to clients.
 """
 
-import logging
-
-logger = logging.getLogger(__name__)
+from typing import Any, Optional
 
 
-def handle_gmail_error(exc: Exception) -> dict:
+class JSONRPCErrorCodes:
+    PARSE_ERROR = -32700
+    INVALID_REQUEST = -32600
+    METHOD_NOT_FOUND = -32601
+    INVALID_PARAMS = -32602
+    INTERNAL_ERROR = -32603
+
+    # Custom Application & Security error codes
+    UNAUTHORIZED = -32001
+    FORBIDDEN = -32002
+    RATE_LIMITED = -32003
+    SECURITY_VIOLATION = -32004
+    SESSION_MISMATCH = -32005
+
+
+def make_jsonrpc_error(
+    code: int,
+    message: str,
+    data: Optional[Any] = None,
+    req_id: Optional[Any] = None,
+) -> dict:
     """
-    Convert any Gmail API exception into a clean MCP tool error response dict.
-
-    Returns a dict with keys:
-      - status: always "failed"
-      - error:  short machine-readable error code
-      - message: human-readable explanation for the AI agent
+    Constructs a spec-compliant JSON-RPC 2.0 error response object.
+    Never includes raw stack traces or internal implementation details.
     """
-    # Import here to avoid making googleapiclient a required import at module level
-    try:
-        from googleapiclient.errors import HttpError
-        if isinstance(exc, HttpError):
-            status_code = exc.resp.status
-            logger.error(f"Gmail HttpError {status_code}: {exc.reason}")
+    error_payload = {
+        "code": code,
+        "message": message,
+    }
+    if data is not None:
+        error_payload["data"] = data
 
-            if status_code == 401:
-                return {
-                    "status": "failed",
-                    "error": "auth_expired",
-                    "message": (
-                        "Gmail token has expired or been revoked. "
-                        "Visit http://localhost:8100/auth/gmail/start to re-authenticate."
-                    ),
-                }
-            elif status_code == 429:
-                return {
-                    "status": "failed",
-                    "error": "rate_limited",
-                    "message": "Gmail API rate limit hit. Wait 60 seconds and retry.",
-                }
-            elif status_code == 400:
-                return {
-                    "status": "failed",
-                    "error": "invalid_input",
-                    "message": f"Gmail rejected the request: {exc.reason}",
-                }
-            elif status_code == 403:
-                return {
-                    "status": "failed",
-                    "error": "permission_denied",
-                    "message": (
-                        "Gmail API permission denied. "
-                        "Ensure the gmail.send scope is granted and re-authenticate."
-                    ),
-                }
-            else:
-                return {
-                    "status": "failed",
-                    "error": f"gmail_http_{status_code}",
-                    "message": f"Gmail API error {status_code}: {exc.reason}",
-                }
-    except ImportError:
-        pass
-
-    # Generic fallback for any other exception
-    logger.error(f"Unexpected error in mail channel: {type(exc).__name__}: {exc}")
     return {
-        "status": "failed",
-        "error": "unknown",
-        "message": f"{type(exc).__name__}: {str(exc)}",
+        "jsonrpc": "2.0",
+        "id": req_id,
+        "error": error_payload,
+    }
+
+
+def make_jsonrpc_success(
+    result: Any,
+    req_id: Optional[Any] = None,
+) -> dict:
+    """Constructs a spec-compliant JSON-RPC 2.0 success response object."""
+    return {
+        "jsonrpc": "2.0",
+        "id": req_id,
+        "result": result,
     }

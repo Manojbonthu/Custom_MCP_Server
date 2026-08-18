@@ -1,74 +1,132 @@
 """
-config.py — Loads config.yaml into typed Python dataclasses.
-
-No pydantic-settings needed — pure PyYAML + dataclasses.
-Singleton pattern: load_config() returns the same object after first call.
+config.py — Typed dataclasses for server, authentication, security, and SMTP configuration.
 """
 
-import yaml
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
+import yaml
 
 
 @dataclass
 class ServerConfig:
     host: str = "0.0.0.0"
     port: int = 8100
+    allowed_origins: List[str] = field(default_factory=lambda: ["*"])
 
 
 @dataclass
-class MailChannelConfig:
-    credentials_path: str = "credentials/google_credentials.json"
-    token_path: str = "credentials/gmail_token.json"
-    scopes: list = field(default_factory=lambda: [
-        "https://www.googleapis.com/auth/gmail.send"
-    ])
-    oauth_redirect_uri: str = "http://localhost:8100/auth/gmail/callback"
+class AuthConfig:
+    enabled: bool = True
+    tokens: Dict[str, str] = field(default_factory=dict)  # token -> caller_identity
 
 
 @dataclass
-class Config:
-    server: ServerConfig
-    enabled_channels: list[str]
-    channels: dict  # channel name → channel config object (e.g. MailChannelConfig)
+class RateLimitConfig:
+    max_calls: int = 10
+    window_seconds: int = 60
 
 
-_config: Optional[Config] = None
+@dataclass
+class PromptInjectionConfig:
+    enabled: bool = True
+    strict_mode: bool = True
 
 
-def load_config(path: str = "config.yaml") -> Config:
-    """Load and cache config from config.yaml. Subsequent calls return cached object."""
-    global _config
-    if _config is not None:
-        return _config
+@dataclass
+class EmailSecurityConfig:
+    allowlist: List[str] = field(default_factory=list)
+    rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
+    prompt_injection_guard: PromptInjectionConfig = field(default_factory=PromptInjectionConfig)
 
-    config_path = Path(path)
-    if not config_path.exists():
-        raise FileNotFoundError(
-            f"Config file not found: {config_path.resolve()}\n"
-            "Make sure to run the server from the project root directory."
-        )
 
-    with open(config_path, "r") as f:
-        raw = yaml.safe_load(f)
+@dataclass
+class SecurityConfig:
+    email: EmailSecurityConfig = field(default_factory=EmailSecurityConfig)
 
-    # Build channel configs
-    channel_configs: dict = {}
-    raw_channels = raw.get("channels", {})
 
-    if "mail" in raw_channels:
-        channel_configs["mail"] = MailChannelConfig(**raw_channels["mail"])
+@dataclass
+class SMTPConfig:
+    mode: str = "simulation"  # "simulation" or "smtp"
+    host: str = "smtp.example.com"
+    port: int = 587
+    username: str = ""
+    password: str = ""
+    use_tls: bool = True
+    sender_address: str = "notifications@company.com"
 
-    _config = Config(
-        server=ServerConfig(**raw.get("server", {})),
-        enabled_channels=raw.get("enabled_channels", []),
-        channels=channel_configs,
+
+@dataclass
+class AppConfig:
+    server: ServerConfig = field(default_factory=ServerConfig)
+    auth: AuthConfig = field(default_factory=AuthConfig)
+    security: SecurityConfig = field(default_factory=SecurityConfig)
+    smtp: SMTPConfig = field(default_factory=SMTPConfig)
+
+
+_config: Optional[AppConfig] = None
+
+
+def load_config(config_path: str = "config.yaml") -> AppConfig:
+    """Loads configuration dynamically from YAML file."""
+    path = Path(config_path)
+    if not path.exists():
+        return AppConfig()
+
+    with open(path, "r", encoding="utf-8") as f:
+        raw = yaml.safe_load(f) or {}
+
+    server_raw = raw.get("server", {})
+    auth_raw = raw.get("auth", {})
+    sec_raw = raw.get("security", {})
+    email_sec_raw = sec_raw.get("email", {})
+    rl_raw = email_sec_raw.get("rate_limit", {})
+    pi_raw = email_sec_raw.get("prompt_injection_guard", {})
+    smtp_raw = raw.get("smtp", {})
+
+    rate_limit = RateLimitConfig(
+        max_calls=rl_raw.get("max_calls", 10),
+        window_seconds=rl_raw.get("window_seconds", 60),
+    )
+
+    pi_guard = PromptInjectionConfig(
+        enabled=pi_raw.get("enabled", True),
+        strict_mode=pi_raw.get("strict_mode", True),
+    )
+
+    email_security = EmailSecurityConfig(
+        allowlist=email_sec_raw.get("allowlist", []),
+        rate_limit=rate_limit,
+        prompt_injection_guard=pi_guard,
+    )
+
+    _config = AppConfig(
+        server=ServerConfig(
+            host=server_raw.get("host", "0.0.0.0"),
+            port=server_raw.get("port", 8100),
+            allowed_origins=server_raw.get("allowed_origins", ["*"]),
+        ),
+        auth=AuthConfig(
+            enabled=auth_raw.get("enabled", True),
+            tokens=auth_raw.get("tokens", {}),
+        ),
+        security=SecurityConfig(
+            email=email_security,
+        ),
+        smtp=SMTPConfig(
+            mode=smtp_raw.get("mode", "simulation"),
+            host=smtp_raw.get("host", "smtp.example.com"),
+            port=smtp_raw.get("port", 587),
+            username=smtp_raw.get("username", ""),
+            password=smtp_raw.get("password", ""),
+            use_tls=smtp_raw.get("use_tls", True),
+            sender_address=smtp_raw.get("sender_address", "notifications@company.com"),
+        ),
     )
     return _config
 
 
 def reset_config() -> None:
-    """Reset cached config — useful for testing."""
+    """Resets cached configuration."""
     global _config
     _config = None
