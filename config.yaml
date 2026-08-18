@@ -1,0 +1,14 @@
+server:
+  host: "0.0.0.0"
+  port: 8100
+
+enabled_channels:
+  - mail
+
+channels:
+  mail:
+    credentials_path: "credentials/google_credentials.json"
+    token_path: "credentials/gmail_token.json"
+    scopes:
+      - "https://www.googleapis.com/auth/gmail.send"
+    oauth_redirect_uri: "http://localhost:8100/auth/gmail/callback"
