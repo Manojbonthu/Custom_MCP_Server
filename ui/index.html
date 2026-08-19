@@ -973,139 +973,34 @@ INSTRUCTIONS:
           return;
         }
 
-        const choice = data.choices?.[0];
-        const message = choice?.message;
-
-        // 1. Check for Native Tool Calls
-        if (message?.tool_calls && message.tool_calls.length > 0) {
-          conversationMessages.push(message);
-
-          for (const toolCall of message.tool_calls) {
-            const funcName = toolCall.function.name;
-            let funcArgs = {};
-            try {
-              funcArgs = JSON.parse(toolCall.function.arguments || "{}");
-            } catch (e) {
-              funcArgs = {};
-            }
-
-            appendToolCard(funcName, funcArgs, "Running tool on MCP Server...");
-            const toolResult = await executeMCPTool(funcName, funcArgs);
-            appendToolCard(funcName, toolResult, "Tool Result Received");
-
-            conversationMessages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              name: funcName,
-              content: JSON.stringify(toolResult)
-            });
-          }
-
-          // Second roundtrip to generate final answer
-          const typingId2 = appendTypingIndicator();
-          const res2 = await fetch(groqUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-              model: model,
-              messages: conversationMessages,
-              tools: groqTools
-            })
-          });
-          const data2 = await res2.json();
-          removeTypingIndicator(typingId2);
-
-          const finalReply = data2.choices?.[0]?.message?.content || "Task completed successfully.";
-          appendMessage("assistant", finalReply);
-          conversationMessages.push({ role: "assistant", content: finalReply });
-
-          // 2. Check for Text-based JSON Tool Action Blocks or Natural Intent Fallback
-        } else {
-          let shouldCallTool = false;
-          let targetTool = "";
-          let targetArgs = {};
-
-          // Check if user is asking an informational question about recipients / tools
-          const isInfoQuery = userLower.includes("whom") || userLower.includes("who") || userLower.includes("can i") || userLower.includes("allowlist") || userLower.includes("allowed") || userLower.includes("list");
-          const isSendCommand = (userLower.includes("send") || userLower.includes("dispatch") || userLower.includes("write") || userLower.includes("compose")) && !isInfoQuery;
-
-          // 1. Explicit Send Email Command
-          if (isSendCommand && (userLower.includes("email") || userLower.includes("mail") || userLower.includes("alert") || userLower.includes("@"))) {
-            shouldCallTool = true;
-            targetTool = "send_email";
-
-            let recipient = "bonthumanoj999@gmail.com";
-            if (userLower.includes("vishal") || userLower.includes("vishalreddykonreddy")) {
-              recipient = "vishalreddykonreddy@gmail.com";
-            } else {
-              const emailMatch = userText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-              if (emailMatch) recipient = emailMatch[0];
-            }
-
-            targetArgs = {
-              to: recipient,
-              subject: "Alert Notification from MCP Web Agent",
-              body: `Hello!\n\nThis message was triggered from your Groq AI Chat Interface.\nUser prompt: "${userText}"\nDispatched via: Model Context Protocol (MCP) Server`
-            };
-
-            // 2. Explicit Time Query
-          } else if ((userLower.includes("time") || userLower.includes("date") || userLower.includes("clock")) && !isInfoQuery) {
-            shouldCallTool = true;
-            targetTool = "get_current_datetime";
-
-            let tz = null;
-            if (userLower.includes("tokyo")) tz = "Asia/Tokyo";
-            else if (userLower.includes("london")) tz = "Europe/London";
-            else if (userLower.includes("new york")) tz = "America/New_York";
-            else if (userLower.includes("kolkata")) tz = "Asia/Kolkata";
-            else if (userLower.includes("paris")) tz = "Europe/Paris";
-            else if (userLower.includes("utc")) tz = "UTC";
-
-            targetArgs = tz ? { timezone: tz } : {};
-          }
-
-          if (shouldCallTool) {
-            appendToolCard(targetTool, targetArgs, "Running tool on MCP Server...");
-            const toolResult = await executeMCPTool(targetTool, targetArgs);
-            appendToolCard(targetTool, toolResult, "Tool Result Received");
-
-            if (targetTool === "send_email") {
-              if (toolResult.status === "sent") {
-                appendMessage("assistant", `✅ **Email Dispatched Successfully!**\n- **Recipient:** \`${toolResult.recipient || targetArgs.to}\`\n- **Subject:** *${toolResult.subject || targetArgs.subject}*\n- **Message ID:** \`${toolResult.message_id}\`\n- **Mode:** \`${toolResult.delivery_mode}\``);
-              } else {
-                appendMessage("assistant", `❌ **Email Failed:** ${toolResult.message || toolResult.error}`);
-              }
-            } else if (targetTool === "get_current_datetime") {
-              if (toolResult.status === "success") {
-                appendMessage("assistant", `🕒 The current time is **${toolResult.formatted || toolResult.datetime_iso}**.\n*(Source: ${toolResult.source || 'Host System Clock'}, Timezone: ${toolResult.timezone || 'Local'})*`);
-              } else {
-                appendMessage("assistant", `❌ **Time Tool Error:** ${toolResult.message || toolResult.error}`);
-              }
-            }
-          } else {
-            // Informational Query or Normal Chat Response
-            let replyText = message?.content;
-            if (!replyText || replyText.trim() === "") {
-              if (userLower.includes("whom") || userLower.includes("who") || userLower.includes("mail") || userLower.includes("recipient") || userLower.includes("allowlist")) {
-                replyText = `You can send email notifications to any of the authorized recipients configured on the server:\n\n` +
-                  `1. 📧 **bonthumanoj999@gmail.com** (Manoj Bonthu)\n` +
-                  `2. 📧 **vishalreddykonreddy@gmail.com** (Vishal Reddy)\n` +
-                  `3. 📧 **ops@company.com** (Operations Team)\n` +
-                  `4. 📧 **manager@company.com** (Management Team)\n` +
-                  `5. 📧 **alerts@company.com** (System Alerts)\n` +
-                  `6. 📧 **\*@trusteddomain.com** (Any email under trusted domains)\n\n` +
-                  `To send an email, simply ask: *"Send an email to bonthumanoj999@gmail.com with status update"*`;
-              } else {
-                replyText = "Hello! I am your AI agent connected to your Streamable MCP Server. How can I assist you today?";
-              }
-            }
-            appendMessage("assistant", replyText);
-            conversationMessages.push({ role: "assistant", content: replyText });
-          }
+        const state = data.result?.state;
+        if (!state) {
+          appendMessage("assistant", "⚠️ No state returned from the Agent.");
+          return;
         }
+
+        // Render completed steps
+        if (state.completed_steps && state.completed_steps.length > 0) {
+          let stepLog = `**Agent Steps Completed:**\n`;
+          state.completed_steps.forEach(step => {
+            stepLog += `- **${step.description}** [${step.tool_name || 'thought'}] ➞ \`${step.status}\`\n`;
+            if (step.result) {
+              stepLog += `  > ${String(step.result).substring(0, 100)}...\n`;
+            }
+          });
+          appendMessage("assistant", stepLog);
+        }
+
+        // See if it is waiting for approval
+        const currentStep = state.plan[state.current_step_index];
+        if (currentStep && currentStep.status === "WAITING_FOR_APPROVAL") {
+          appendMessage("assistant", `🛑 **Human Approval Required!**\n\nThe agent wants to execute \`${currentStep.tool_name}\` for the step: *${currentStep.description}*.\n\n<button onclick="handleUserSend('${currentStep.step_id}', '${userText.replace(/'/g, "\\'")}')" style="background:var(--accent-red); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; margin-top:10px; font-weight:bold;">Authorize & Resume Workflow</button>`);
+        } else if (state.current_step_index >= state.plan.length || state.status === "FAILED") {
+          appendMessage("assistant", `✅ **Agent workflow completed.**\nResult: *${state.result || "Finished cleanly."}*`);
+        } else {
+          appendMessage("assistant", `The agent is still working (Status: ${state.status})...`);
+        }
+
 
       } catch (err) {
         removeTypingIndicator(typingBubbleId);

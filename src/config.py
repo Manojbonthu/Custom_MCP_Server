@@ -76,7 +76,11 @@ def _resolve_env(value):
         env_name = value[6:-1]
         return os.environ.get(env_name, "")
     if isinstance(value, dict):
-        return {k: _resolve_env(v) for k, v in value.items()}
+        resolved_dict = {}
+        for k, v in value.items():
+            new_k = _resolve_env(k) if isinstance(k, str) else k
+            resolved_dict[new_k] = _resolve_env(v)
+        return resolved_dict
     if isinstance(value, list):
         return [_resolve_env(v) for v in value]
     return value

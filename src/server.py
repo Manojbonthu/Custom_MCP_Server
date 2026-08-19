@@ -439,10 +439,7 @@ async def lifespan(app: Starlette) -> AsyncGenerator[None, None]:
         import os
         
         # Initialize Agent Runtime Components
-        if os.environ.get("GEMINI_API_KEY"):
-            llm_client = GeminiClient(model_name="gemini-3.5-flash")
-        else:
-            llm_client = GroqClient(model_name="qwen/qwen3.6-27b")
+        llm_client = GroqClient(model_name="qwen/qwen3.6-27b")
             
         planner = Planner(llm_client)
         decision_engine = DecisionEngine(llm_client, get_tool_definitions())

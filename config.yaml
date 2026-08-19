@@ -12,11 +12,11 @@
 auth:
   enabled: true
   tokens:
-    "agent-token-alpha": "agent_alpha"
-    "agent-token-beta": "agent_beta"
-    "admin-token-secret": "admin_user"
-    "vishal-test-token": "vishal_engineer"
-    "vinod-test-token": "vinod_engineer"
+    "${env:AGENT_TOKEN_ALPHA}": "agent_alpha"
+    "${env:AGENT_TOKEN_BETA}": "agent_beta"
+    "${env:ADMIN_TOKEN_SECRET}": "admin_user"
+    "${env:VISHAL_TEST_TOKEN}": "vishal_engineer"
+    "${env:VINOD_TEST_TOKEN}": "vinod_engineer"
   users:
     vishal:
       password: "vishal123"
