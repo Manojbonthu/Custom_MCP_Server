@@ -1,11 +1,12 @@
 """
-test_multi_servers.py — Tests for specialized Gmail & Time MCP servers.
+test_multi_servers.py — Tests for specialized Gmail, Time, and Postgres Database MCP servers.
 """
 
 import pytest
 from starlette.testclient import TestClient
 from src.servers.gmail_server import app as gmail_app
 from src.servers.time_server import app as time_app
+from src.servers.database_server import app as database_app
 
 
 @pytest.fixture
@@ -16,6 +17,11 @@ def gmail_client():
 @pytest.fixture
 def time_client():
     return TestClient(time_app)
+
+
+@pytest.fixture
+def database_client():
+    return TestClient(database_app)
 
 
 # ── Gmail Server Tests (Port 8101) ──────────────────────────────────────────
@@ -151,3 +157,119 @@ def test_time_get_system_uptime(time_client):
     data = res.json()
     content = data["result"]["content"][0]["text"]
     assert "uptime_seconds" in content
+
+
+# ── Postgres Database Server Tests (Port 8103) ──────────────────────────────
+
+def test_database_server_health(database_client):
+    res = database_client.get("/health")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "healthy"
+    assert data["server"] == "postgres-database-mcp-server"
+    assert data["tools_count"] == 3
+
+
+def test_database_tools_list(database_client):
+    res = database_client.post(
+        "/mcp",
+        json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        headers={"Authorization": "Bearer vishal-test-token"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    tools = data["result"]["tools"]
+    tool_names = [t["name"] for t in tools]
+    assert "query_projects" in tool_names
+    assert "get_project_evidence" in tool_names
+    assert "list_all_projects" in tool_names
+
+
+def test_database_query_projects(database_client):
+    res = database_client.post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {
+                "name": "query_projects",
+                "arguments": {
+                    "department": "Engineering",
+                    "status": "Active"
+                }
+            },
+        },
+        headers={"Authorization": "Bearer vishal-test-token"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    content = data["result"]["content"][0]["text"]
+    assert "Project Apollo" in content
+
+
+def test_database_get_project_evidence(database_client):
+    res = database_client.post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "get_project_evidence",
+                "arguments": {
+                    "project_name": "Project Apollo"
+                }
+            },
+        },
+        headers={"Authorization": "Bearer vishal-test-token"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    content = data["result"]["content"][0]["text"]
+    assert "evidence" in content
+    assert "50,000" in content
+
+
+def test_database_list_all_projects(database_client):
+    res = database_client.post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+                "name": "list_all_projects",
+                "arguments": {}
+            },
+        },
+        headers={"Authorization": "Bearer vishal-test-token"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    content = data["result"]["content"][0]["text"]
+    assert "row_count" in content
+    assert "Project Apollo" in content
+
+
+def test_database_read_only_protection(database_client):
+    # Test that mutating SQL commands like DROP or DELETE are rejected
+    res = database_client.post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+                "name": "query_projects",
+                "arguments": {
+                    "sql_query": "DROP TABLE projects;"
+                }
+            },
+        },
+        headers={"Authorization": "Bearer vishal-test-token"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    content = data["result"]["content"][0]["text"]
+    assert "prohibited" in content or "query_not_allowed" in content

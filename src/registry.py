@@ -1,6 +1,6 @@
 """
 registry.py — Unified Master Tool Registry for MCP Server (Port 8100).
-Registers all 7 tools across Gmail and Time/System domains and supports
+Registers all tools across specialized domains and supports
 dynamic remote tool registration via ServerRegistry.
 """
 
@@ -26,11 +26,20 @@ from src.servers.time_server import (
     handle_convert_timezone,
     handle_get_system_uptime,
 )
+from src.servers.database_server import (
+    DATABASE_TOOLS,
+    QueryProjectsInput,
+    GetProjectEvidenceInput,
+    ListAllProjectsInput,
+    handle_query_projects,
+    handle_get_project_evidence,
+    handle_list_all_projects,
+)
 
 logger = logging.getLogger(__name__)
 
 # Master list of all tools available on the Unified MCP Gateway (Port 8100)
-TOOL_DEFINITIONS = GMAIL_TOOLS + TIME_TOOLS
+TOOL_DEFINITIONS = GMAIL_TOOLS + TIME_TOOLS + DATABASE_TOOLS
 
 
 class ToolRegistry:

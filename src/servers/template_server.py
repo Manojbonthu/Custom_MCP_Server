@@ -32,7 +32,7 @@ setup_logging()
 logger = logging.getLogger("TemplateMCPServer")
 
 # ── 1. Configure Server Identity & Port ──────────────────────────────────────
-SERVER_PORT = 8103  # Choose an available port (e.g., 8103, 8104, etc.)
+SERVER_PORT = 8104  # Choose an available port (e.g., 8104, 8105, etc.)
 MCP_PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {
     "name": "custom-mcp-server-template",
@@ -159,35 +159,59 @@ async def handle_jsonrpc_request(payload: Dict[str, Any], caller: str) -> Dict[s
     return make_jsonrpc_error(JSONRPCErrorCodes.METHOD_NOT_FOUND, f"Method '{method}' not found.", req_id)
 
 
-async def mcp_post_endpoint(request: Request) -> Response:
-    caller = getattr(request.state, "caller", "anonymous_caller")
+async def mcp_post_endpoint(request: Request) -> JSONResponse:
+    caller = getattr(request.state, "caller_identity", "anonymous_caller")
+    session = getattr(request.state, "session", None)
     try:
-        payload = await request.json()
+        body = await request.body()
+        payload = json.loads(body.decode("utf-8"))
     except Exception:
-        return JSONResponse(make_jsonrpc_error(JSONRPCErrorCodes.PARSE_ERROR, "Invalid JSON body."), status_code=400)
+        return JSONResponse(make_jsonrpc_error(JSONRPCErrorCodes.PARSE_ERROR, "Invalid JSON payload."), status_code=400)
 
     if isinstance(payload, list):
         results = await asyncio.gather(*[handle_jsonrpc_request(req, caller) for req in payload])
+        if session:
+            session.add_event(event_name="message", data=json.dumps(results))
         return JSONResponse(results, status_code=200)
 
     result = await handle_jsonrpc_request(payload, caller)
+    if session:
+        session.add_event(event_name="message", data=json.dumps(result))
     return JSONResponse(result, status_code=200)
 
 
 async def mcp_sse_endpoint(request: Request) -> StreamingResponse:
-    caller = getattr(request.state, "caller", "anonymous_caller")
-    session_id = session_manager.create_session(caller=caller, role="authenticated")
+    session = getattr(request.state, "session", None)
+    session_id = getattr(request.state, "session_id", "default")
+    caller = getattr(request.state, "caller_identity", "unknown")
 
     async def sse_generator() -> AsyncGenerator[str, None]:
-        yield f"event: endpoint\ndata: http://localhost:{SERVER_PORT}/mcp?session_id={session_id}\n\n"
-        while True:
-            await asyncio.sleep(15)
-            yield f": ping\n\n"
+        endpoint_uri = f"http://localhost:{SERVER_PORT}/mcp?session_id={session_id}"
+        yield f"event: endpoint\ndata: {endpoint_uri}\n\n"
+        try:
+            while True:
+                if session:
+                    try:
+                        event = await asyncio.wait_for(session.queue.get(), timeout=15.0)
+                        yield f"id: {event.event_id}\nevent: {event.event_name}\ndata: {event.data}\n\n"
+                    except asyncio.TimeoutError:
+                        yield ": keepalive\n\n"
+                else:
+                    await asyncio.sleep(15.0)
+                    yield ": keepalive\n\n"
+        except asyncio.CancelledError:
+            pass
 
     return StreamingResponse(
         sse_generator(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
     )
 
 

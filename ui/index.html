@@ -649,7 +649,7 @@
       <div class="logo-badge">G</div>
       <div class="logo-title">
         <h1>Groq AI Agent Hub</h1>
-        <p>Multi-Server MCP Architecture (Gmail Server :8101 + Time Server :8102)</p>
+        <p>Multi-Server MCP Architecture (Gmail :8101 + Time :8102 + Database :8103)</p>
       </div>
     </div>
     <div class="header-actions" style="display:flex; gap:0.6rem; flex-wrap:wrap;">
@@ -660,6 +660,10 @@
       <div class="status-pill" id="timeStatusBadge">
         <div class="status-dot" id="timeStatusDot"></div>
         <span id="timeStatusText">🕒 Time & System :8102</span>
+      </div>
+      <div class="status-pill" id="dbStatusBadge" style="background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:var(--accent-amber);">
+        <div class="status-dot" id="dbStatusDot" style="background:var(--accent-amber); box-shadow:0 0 10px var(--accent-amber);"></div>
+        <span id="dbStatusText">🗄️ Database :8103</span>
       </div>
     </div>
   </header>
@@ -702,7 +706,6 @@
               <button id="logoutBtn" onclick="handleLogout()" class="logout-btn">Logout</button>
             </div>
             <input type="hidden" id="mcpToken" value="" />
-            <input type="hidden" id="mcpEndpoint" value="http://localhost:8100/mcp" />
             <div id="roleAccessBadge" style="font-size:0.73rem; color:var(--accent-green); background:rgba(16,185,129,0.1); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
               🛡️ Status: <strong>Checking Session...</strong>
             </div>
@@ -718,13 +721,22 @@
       </div>
 
       <div class="sidebar-section">
-        <h2>💡 Quick Prompt Ideas</h2>
+        <h2>💡 Multi-Tool Prompt Ideas</h2>
         <div class="prompt-suggestions">
           <button class="prompt-pill" onclick="sendQuickPrompt('What is the current time in Tokyo and London?')">
             🕒 What is the time in Tokyo and London?
           </button>
           <button class="prompt-pill" onclick="sendQuickPrompt('Convert 04:30 PM New York time to Asia/Kolkata timezone.')">
             🌐 Convert 4:30 PM NYC time to Kolkata
+          </button>
+          <button class="prompt-pill" onclick="sendQuickPrompt('Show me all active projects and their budgets from the database.')">
+            🗄️ List active projects & budgets (DB)
+          </button>
+          <button class="prompt-pill" onclick="sendQuickPrompt('Get project evidence and delivery summary for Project Apollo.')">
+            📊 Get Project Apollo evidence (DB)
+          </button>
+          <button class="prompt-pill" onclick="sendQuickPrompt('Query the database for all projects in Engineering department.')">
+            👥 Query Engineering projects (DB)
           </button>
           <button class="prompt-pill" onclick="sendQuickPrompt('Show me my server uptime and platform metrics.')">
             💻 Show server uptime & OS metrics
@@ -735,10 +747,7 @@
           <button class="prompt-pill" onclick="sendQuickPrompt('Search my emails for keywords about MCP Server status.')">
             🔍 Search emails for 'MCP Server'
           </button>
-          <button class="prompt-pill" onclick="sendQuickPrompt('Create an email draft to vishalreddykonreddy@gmail.com with subject Project Update.')">
-            📝 Create an email draft to Vishal
-          </button>
-          <button class="prompt-pill" onclick="sendQuickPrompt('Send an email to bonthumanoj999@gmail.com stating that both Multi-MCP servers are operational.')">
+          <button class="prompt-pill" onclick="sendQuickPrompt('Send an email to bonthumanoj999@gmail.com stating that all 3 Multi-MCP servers are operational.')">
             📧 Send an email alert to Manoj
           </button>
         </div>
@@ -755,7 +764,7 @@
           <div class="message-bubble">
             <p><strong>Welcome to the Groq AI Agent Hub!</strong></p>
             <p style="margin-top: 0.35rem; color: var(--text-muted);">
-              Powered by ultra-fast <strong>Groq LPU™ Inference</strong> and connected to your <strong>Multi-Server MCP Architecture</strong>. Ask any question in the world, and Groq will automatically invoke your local tools to check system time, convert timezones, check server uptime, or manage Gmail emails.
+              Powered by ultra-fast <strong>Groq LPU™ Inference</strong> and connected to your <strong>Multi-Server MCP Architecture</strong>. Ask any question in the world, and Groq will automatically invoke your local tools to query PostgreSQL databases, check system time, convert timezones, check server uptime, or manage Gmail emails.
             </p>
           </div>
         </div>
@@ -780,30 +789,15 @@
     let conversationMessages = [
       {
         role: "system",
-        content: `You are an intelligent AI assistant with access to a Multi-Server Model Context Protocol (MCP) Architecture.
+        content: `You are an intelligent, helpful AI assistant connected to a Multi-Server Model Context Protocol (MCP) Architecture.
+You have vast general knowledge across sports, science, history, coding, and conversation.
 
-📧 GMAIL MCP SERVER (:8101):
-- send_email(to, subject, body): Dispatches outgoing email via Gmail SMTP with allowlist security.
-- read_inbox(max_results): Reads and summarizes recent incoming emails from Gmail inbox.
-- search_emails(query): Searches emails by keyword, sender, or subject.
-- create_draft(to, subject, body): Creates an email draft in Gmail.
+You have access to tools across 3 specialized MCP microservice servers:
+1. 📧 Gmail MCP Server (:8101): send_email, read_inbox, search_emails, create_draft
+2. 🕒 Time & System MCP Server (:8102): get_current_datetime, convert_timezone, get_system_uptime
+3. 🗄️ Postgres Database MCP Server (:8103): query_projects, get_project_evidence, list_all_projects
 
-🕒 TIME & SYSTEM MCP SERVER (:8102):
-- get_current_datetime(timezone): Reads current host system clock with timezone support.
-- convert_timezone(time_str, from_tz, to_tz): Converts a timestamp between timezones.
-- get_system_uptime(): Returns server uptime and OS platform status.
-
-NAME & RECIPIENT DIRECTORY:
-- 'manoj' or 'bonthu' -> bonthumanoj999@gmail.com
-- 'vishal' -> vishalreddykonreddy@gmail.com
-- 'vinod' -> vinod@company.com
-
-CRITICAL TOOL INVOCATION RULES:
-1. When the user says 'send the mail to manoj' or 'send mail to vishal' or provides an explicit email address, DO NOT ask them for missing subject/body. Immediately compose a polite message (e.g. subject='Message from Groq AI', body='Hi, hope you are doing well!') and CALL send_email(to, subject, body) immediately!
-2. If the user asks to send an email to an unknown name (e.g. 'kunnu') without providing an email address, tell them you need their email address.
-3. When the user asks for time/clock/date, CALL get_current_datetime(timezone) immediately!
-4. When the user asks which emails can be sent or asks about allowed emails, list the authorized allowlist recipients.
-5. For general conversation ('hi', sports, coding), respond conversationally.`
+When a user asks about projects, evidence, department initiatives, budgets, or database queries, use the Database MCP Server (:8103) tools autonomously.`
       }
     ];
     let isGenerating = false;
@@ -830,6 +824,16 @@ CRITICAL TOOL INVOCATION RULES:
         textId: "timeStatusText",
         tag: "Time :8102",
         color: "var(--accent-cyan)"
+      },
+      {
+        id: "database",
+        name: "Postgres Database MCP Server",
+        url: "http://localhost:8103/mcp",
+        badgeId: "dbStatusBadge",
+        dotId: "dbStatusDot",
+        textId: "dbStatusText",
+        tag: "DB :8103",
+        color: "var(--accent-amber)"
       }
     ];
 
@@ -859,125 +863,102 @@ CRITICAL TOOL INVOCATION RULES:
           const select = document.getElementById("groqModel");
           const allModels = (data.data || []).map(m => m.id);
 
-          // Priority list of tool-calling models
-          const preferredModels = [
+          const preferredToolModels = [
             "llama-3.3-70b-versatile",
             "llama-3.1-70b-versatile",
-            "llama-3.1-8b-instant",
+            "llama3-70b-8192",
             "llama3-8b-8192",
             "qwen-2.5-32b",
-            "deepseek-r1-distill-llama-70b",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
+            "deepseek-r1-distill-llama-70b"
           ];
 
-          const availablePreferred = preferredModels.filter(m => allModels.includes(m));
-          const otherModels = allModels.filter(m => !preferredModels.includes(m) && !m.includes("whisper") && !m.includes("guard") && !m.includes("tts"));
-
-          select.innerHTML = "";
-
-          availablePreferred.forEach(m => {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.textContent = `${m} (✨ Tool Calling & Fast)`;
-            select.appendChild(opt);
-          });
-
-          otherModels.forEach(m => {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.textContent = m;
-            select.appendChild(opt);
-          });
-
-          // Always lock default selection to llama-3.3-70b-versatile if available
-          if (availablePreferred.includes("llama-3.3-70b-versatile")) {
-            select.value = "llama-3.3-70b-versatile";
-          } else if (availablePreferred.length > 0) {
-            select.value = availablePreferred[0];
+          let bestModel = preferredToolModels.find(m => allModels.includes(m)) || "llama-3.3-70b-versatile";
+          if (allModels.includes(bestModel)) {
+            select.value = bestModel;
           }
         }
       } catch (err) {
-        console.warn("Could not dynamically fetch Groq models:", err);
+        console.warn("Could not fetch models dynamically, using defaults:", err);
       }
     }
 
-    // Auto-expand textarea
-    const textarea = document.getElementById("userInput");
-    textarea.addEventListener("input", function() {
-      this.style.height = "auto";
-      this.style.height = (this.scrollHeight) + "px";
-    });
-    textarea.addEventListener("keydown", function(e) {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleUserSend();
-      }
-    });
-
-    function sendQuickPrompt(promptText) {
-      document.getElementById("userInput").value = promptText;
-      handleUserSend();
-    }
-
-    // ── User Authentication Accounts ──
+    // ── Authentication & User Accounts (RBAC) ──
     const USER_ACCOUNTS = {
-      "vishal": { password: "vishal123", identity: "vishal_engineer", name: "Vishal Reddy", roleDesc: "Full Admin (All Tools)", token: "vishal-test-token", color: "var(--accent-green)" },
-      "vinod": { password: "vinod123", identity: "vinod_engineer", name: "Vinod Kumar", roleDesc: "Full Admin (All Tools)", token: "vinod-test-token", color: "var(--accent-green)" },
-      "admin": { password: "admin123", identity: "admin_user", name: "Admin User", roleDesc: "Superuser (All Tools)", token: "admin-token-secret", color: "var(--accent-green)" },
-      "agent_alpha": { password: "alpha123", identity: "agent_alpha", name: "Agent Alpha", roleDesc: "Standard User", token: "agent-token-alpha", color: "var(--accent-cyan)" },
-      "agent_beta": { password: "beta123", identity: "agent_beta", name: "Agent Beta", roleDesc: "Restricted User", token: "agent-token-beta", color: "var(--accent-amber)" },
+      "vishal": {
+        name: "Vishal Reddy",
+        role: "Lead Platform Engineer",
+        token: "vishal-test-token",
+        badge: "👑 Full Admin (All Tools)"
+      },
+      "vinod": {
+        name: "Vinod Kumar",
+        role: "Senior Operations Lead",
+        token: "vinod-test-token",
+        badge: "⭐ Operator (All Tools)"
+      },
+      "admin": {
+        name: "Security Administrator",
+        role: "Superuser",
+        token: "admin-token-secret",
+        badge: "🛡️ Superuser (All Tools)"
+      },
+      "agent_alpha": {
+        name: "Agent Alpha",
+        role: "Automated Worker",
+        token: "agent-token-alpha",
+        badge: "🤖 Standard Agent"
+      },
+      "agent_beta": {
+        name: "Agent Beta",
+        role: "Restricted Worker",
+        token: "agent-token-beta",
+        badge: "🔒 Restricted Read-Only"
+      }
     };
 
-    function handleLoginSubmit(e) {
-      e.preventDefault();
-      const u = document.getElementById("loginUsername").value.trim().toLowerCase();
-      const p = document.getElementById("loginPassword").value;
-      const errEl = document.getElementById("loginErrorMsg");
+    function handleLoginSubmit(event) {
+      event.preventDefault();
+      const usernameInput = document.getElementById("loginUsername").value.trim().toLowerCase();
+      const passwordInput = document.getElementById("loginPassword").value.trim();
+      const errorMsg = document.getElementById("loginErrorMsg");
 
-      const account = USER_ACCOUNTS[u];
-      if (account && account.password === p) {
-        errEl.style.display = "none";
-        sessionStorage.setItem("MCP_LOGGED_USER", u);
-        sessionStorage.setItem("MCP_AUTH_TOKEN", account.token);
+      const validPasswords = {
+        "vishal": "vishal123",
+        "vinod": "vinod123",
+        "admin": "admin123",
+        "agent_alpha": "alpha123",
+        "agent_beta": "beta123"
+      };
+
+      if (USER_ACCOUNTS[usernameInput] && validPasswords[usernameInput] === passwordInput) {
+        errorMsg.style.display = "none";
+        const account = USER_ACCOUNTS[usernameInput];
+        sessionStorage.setItem("MCP_LOGGED_USER", usernameInput);
         applyLoggedInSession(account);
+        document.getElementById("loginModalOverlay").style.display = "none";
       } else {
-        errEl.textContent = "❌ Invalid username or password. Please try again.";
-        errEl.style.display = "block";
+        errorMsg.textContent = "Invalid username or password. Try: vishal / vishal123";
+        errorMsg.style.display = "block";
       }
     }
 
     function applyLoggedInSession(account) {
-      document.getElementById("loginModalOverlay").style.display = "none";
+      document.getElementById("loggedInUserTitle").textContent = `👤 ${account.name}`;
+      document.getElementById("loggedInUserRoleDesc").textContent = account.role;
+      document.getElementById("roleAccessBadge").innerHTML = `🛡️ Permissions: <strong>${account.badge}</strong>`;
       document.getElementById("mcpToken").value = account.token;
-      document.getElementById("loggedInUserTitle").textContent = `👤 ${account.name} (@${account.identity})`;
-      document.getElementById("loggedInUserRoleDesc").textContent = account.roleDesc;
-
-      const badge = document.getElementById("roleAccessBadge");
-      badge.style.color = account.color;
-      badge.style.borderColor = account.color;
-      badge.innerHTML = `🛡️ Role: <strong>${account.identity}</strong> (${account.roleDesc})`;
-
       fetchMCPTools();
     }
 
     function handleLogout() {
       sessionStorage.removeItem("MCP_LOGGED_USER");
-      sessionStorage.removeItem("MCP_AUTH_TOKEN");
-      document.getElementById("loginUsername").value = "";
-      document.getElementById("loginPassword").value = "";
-      document.getElementById("loginErrorMsg").style.display = "none";
-      document.getElementById("loginModalOverlay").style.display = "flex";
       document.getElementById("loggedInUserTitle").textContent = "👤 Not Logged In";
       document.getElementById("loggedInUserRoleDesc").textContent = "Please sign in to access tools.";
+      document.getElementById("roleAccessBadge").innerHTML = "🛡️ Status: <strong>Logged Out</strong>";
       document.getElementById("mcpToken").value = "";
-      
-      const badge = document.getElementById("roleAccessBadge");
-      badge.style.color = "var(--accent-red)";
-      badge.style.borderColor = "var(--accent-red)";
-      badge.innerHTML = `🛡️ Status: <strong>Logged Out</strong>`;
-
-      fetchMCPTools();
+      document.getElementById("toolsList").innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); padding:0.5rem; text-align:center;">🔒 Sign in to view authorized MCP tools.</div>`;
+      document.getElementById("toolCount").textContent = "0";
+      document.getElementById("loginModalOverlay").style.display = "flex";
     }
 
     // Initialize session on load
@@ -1410,6 +1391,12 @@ CRITICAL TOOL INVOCATION RULES:
         .replace(/\*(.*?)\*/g, "<em>$1</em>")
         .replace(/`([^`]+)`/g, "<code style='background:rgba(255,255,255,0.1);padding:0.15rem 0.35rem;border-radius:4px;font-family:monospace;'>$1</code>")
         .replace(/\n/g, "<br>");
+    }
+
+    function sendQuickPrompt(prompt) {
+      const input = document.getElementById("userInput");
+      input.value = prompt;
+      handleUserSend();
     }
   </script>
 </body>
