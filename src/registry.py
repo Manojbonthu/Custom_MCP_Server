@@ -1,64 +1,36 @@
 """
-registry.py — Tool registration for MCP server.
-Registers get_current_datetime and send_email tools with schemas and handlers.
+registry.py — Unified Master Tool Registry for MCP Server (Port 8100).
+Registers all 7 tools across Gmail and Time/System domains and supports
+dynamic remote tool registration via ServerRegistry.
 """
 
 import logging
 from typing import Any, Callable, Dict, List, Optional
-from src.tools.datetime_tool import (
-    GetCurrentDateTimeInput,
-    get_current_datetime_handler,
-)
-from src.tools.email_tool import (
+from src.servers.gmail_server import (
+    GMAIL_TOOLS,
     SendEmailInput,
-    send_email_handler,
+    ReadInboxInput,
+    SearchEmailsInput,
+    CreateDraftInput,
+    handle_send_email,
+    handle_read_inbox,
+    handle_search_emails,
+    handle_create_draft,
+)
+from src.servers.time_server import (
+    TIME_TOOLS,
+    GetCurrentDateTimeInput,
+    ConvertTimezoneInput,
+    GetSystemUptimeInput,
+    handle_get_current_datetime,
+    handle_convert_timezone,
+    handle_get_system_uptime,
 )
 
 logger = logging.getLogger(__name__)
 
-# Registry of MCP Tools metadata and handlers
-TOOL_DEFINITIONS = [
-    {
-        "name": "get_current_datetime",
-        "description": "Returns the current host system date and time with optional IANA timezone conversion (e.g. 'UTC', 'America/New_York', 'Asia/Kolkata').",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "timezone": {
-                    "type": "string",
-                    "description": "Optional IANA timezone name (e.g. 'UTC', 'America/New_York', 'Asia/Kolkata', 'Europe/London'). Defaults to system local time if omitted.",
-                }
-            },
-            "required": [],
-        },
-        "model_cls": GetCurrentDateTimeInput,
-        "handler": get_current_datetime_handler,
-    },
-    {
-        "name": "send_email",
-        "description": "Sends an email notification via server SMTP with strict security guardrails (recipient allowlist checking, per-caller rate limits, and prompt injection defense).",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "to": {
-                    "type": "string",
-                    "description": "Recipient email address (e.g. 'ops@company.com', 'manager@company.com'). Must be in the authorized allowlist.",
-                },
-                "subject": {
-                    "type": "string",
-                    "description": "Subject line of the email. Must not contain prompt injection sequences.",
-                },
-                "body": {
-                    "type": "string",
-                    "description": "Body content of the email. Must not contain prompt injection sequences.",
-                },
-            },
-            "required": ["to", "subject", "body"],
-        },
-        "model_cls": SendEmailInput,
-        "handler": send_email_handler,
-    },
-]
+# Master list of all tools available on the Unified MCP Gateway (Port 8100)
+TOOL_DEFINITIONS = GMAIL_TOOLS + TIME_TOOLS
 
 
 class ToolRegistry:
@@ -83,7 +55,6 @@ class ToolRegistry:
     def register_remote_tools(self, server_name: str, tools: List[Dict[str, Any]]):
         """Registers a list of tools dynamically discovered from a remote server."""
         for tool in tools:
-            # We add metadata identifying its remote server source
             tool["_is_local"] = False
             tool["_remote_server"] = server_name
             self.tool_definitions.append(tool)
@@ -124,27 +95,13 @@ class ToolRegistry:
 
         raise KeyError(f"Tool '{tool_name}' not found.")
 
+
 global_tool_registry = ToolRegistry()
+
 
 def get_tool_definitions() -> List[Dict[str, Any]]:
     return global_tool_registry.get_tool_definitions()
 
+
 async def execute_tool(tool_name: str, arguments: Dict[str, Any], caller: Optional[str] = None) -> dict:
     return await global_tool_registry.execute_tool(tool_name, arguments, caller=caller)
-
-
-
-def register_all(mcp_server: Any) -> None:
-    """
-    If using FastMCP or MCPServer instance, registers all tools directly.
-    """
-    if hasattr(mcp_server, "tool"):
-        @mcp_server.tool(name="get_current_datetime", description="Returns host system date and time with optional IANA timezone conversion.")
-        async def get_current_datetime(timezone: Optional[str] = None) -> dict:
-            return await get_current_datetime_handler(GetCurrentDateTimeInput(timezone=timezone))
-
-        @mcp_server.tool(name="send_email", description="Sends an email notification via server SMTP with strict security guardrails.")
-        async def send_email(to: str, subject: str, body: str) -> dict:
-            return await send_email_handler(SendEmailInput(to=to, subject=subject, body=body))
-
-        logger.info("Registered tools with MCP Server instance.")
