@@ -19,6 +19,7 @@ class ServerConfig:
 class AuthConfig:
     enabled: bool = True
     tokens: Dict[str, str] = field(default_factory=dict)  # token -> caller_identity
+    users: Dict[str, Dict[str, str]] = field(default_factory=dict)  # username -> {password, identity, token}
     permissions: Dict[str, List[str]] = field(default_factory=dict)  # caller_identity -> [allowed_tools]
 
 
@@ -110,6 +111,7 @@ def load_config(config_path: str = "config.yaml") -> AppConfig:
         auth=AuthConfig(
             enabled=auth_raw.get("enabled", True),
             tokens=auth_raw.get("tokens", {}),
+            users=auth_raw.get("users", {}),
             permissions=auth_raw.get("permissions", {}),
         ),
         security=SecurityConfig(

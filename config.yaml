@@ -17,6 +17,27 @@ auth:
     "admin-token-secret": "admin_user"
     "vishal-test-token": "vishal_engineer"
     "vinod-test-token": "vinod_engineer"
+  users:
+    vishal:
+      password: "vishal123"
+      identity: "vishal_engineer"
+      token: "vishal-test-token"
+    vinod:
+      password: "vinod123"
+      identity: "vinod_engineer"
+      token: "vinod-test-token"
+    admin:
+      password: "admin123"
+      identity: "admin_user"
+      token: "admin-token-secret"
+    agent_alpha:
+      password: "alpha123"
+      identity: "agent_alpha"
+      token: "agent-token-alpha"
+    agent_beta:
+      password: "beta123"
+      identity: "agent_beta"
+      token: "agent-token-beta"
   permissions:
     vishal_engineer: ["*"]
     vinod_engineer: ["*"]
