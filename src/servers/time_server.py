@@ -113,14 +113,19 @@ TZ_ABBREVIATIONS: Dict[str, str] = {
 
 def resolve_tz(tz_name: Optional[str], default_name: str = "UTC") -> zoneinfo.ZoneInfo:
     if not tz_name or not tz_name.strip():
-        return zoneinfo.ZoneInfo(default_name)
+        tz_name = default_name
     cleaned = tz_name.strip()
+    
     if cleaned.upper() in TZ_ABBREVIATIONS:
         cleaned = TZ_ABBREVIATIONS[cleaned.upper()]
+        
     try:
         return zoneinfo.ZoneInfo(cleaned)
     except Exception:
-        return zoneinfo.ZoneInfo(default_name)
+        # Fallback entirely for Windows if IANA DB is missing
+        if default_name == "UTC" or cleaned.upper() == "UTC":
+            return timezone.utc
+        return zoneinfo.ZoneInfo("UTC")
 
 
 async def handle_convert_timezone(data: ConvertTimezoneInput, caller: Optional[str] = None) -> dict:

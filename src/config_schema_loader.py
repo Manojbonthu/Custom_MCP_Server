@@ -26,8 +26,6 @@ class ConfigLoader:
             if schema_path.exists():
                 with open(schema_path, "r", encoding="utf-8") as f:
                     self.schemas[key] = yaml.safe_load(f)
-            else:
-                logger.warning(f"Schema file not found: {schema_path}")
 
     def load_and_validate(self) -> Dict[str, Any]:
         """Loads and validates all configurations against their schemas."""

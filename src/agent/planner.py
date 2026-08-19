@@ -1,13 +1,22 @@
 import json
 import logging
-from typing import List, Protocol
+from typing import List, Protocol, Dict, Any
 from .state import StepInfo
 
 logger = logging.getLogger(__name__)
 
 class LLMClientProtocol(Protocol):
-    def generate_json(self, prompt: str) -> dict:
-        """Returns a parsed JSON dictionary from the LLM"""
+    """
+    Structural Type Definition (Protocol) for LLM Clients.
+    Any class (like GroqClient or GeminiClient) that implements these matching 
+    function signatures will automatically satisfy this type requirement natively 
+    without needing formal inheritance.
+    """
+    def generate_json(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Executes a prompt against the language model and strictly parses the output into a dictionary.
+        The '...' symbol is intentional valid Python syntax for Protocol stubs.
+        """
         ...
 
 class Planner:

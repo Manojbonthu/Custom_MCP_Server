@@ -55,6 +55,7 @@ security:
       - "vinod@company.com"
       - "vishalreddykonreddy@gmail.com"
       - "bonthumanoj999@gmail.com"
+      - "vnerella88@gmail.com"
       - "*@trusteddomain.com"
     rate_limit:
       max_calls: 10
@@ -67,7 +68,7 @@ smtp:
   mode: "smtp"
   host: "smtp.gmail.com"
   port: 587
-  username: "vishalreddykonreddy@gmail.com"
-  password: "brymlwiqqihwzoyr"
+  username: "${env:SMTP_USER}"
+  password: "${env:SMTP_PASS}"
   use_tls: true
-  sender_address: "vishalreddykonreddy@gmail.com"
+  sender_address: "${env:SMTP_USER}"

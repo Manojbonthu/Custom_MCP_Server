@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import os
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @dataclass
