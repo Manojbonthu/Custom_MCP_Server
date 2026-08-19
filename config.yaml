@@ -1,4 +1,4 @@
-﻿server:
+server:
   host: "0.0.0.0"
   port: 8100
   allowed_origins:
@@ -55,7 +55,10 @@ security:
       - "vinod@company.com"
       - "vishalreddykonreddy@gmail.com"
       - "bonthumanoj999@gmail.com"
+      - "manojbonthu999@gmail.com"
       - "vnerella88@gmail.com"
+      - "*@gmail.com"
+      - "*@company.com"
       - "*@trusteddomain.com"
     rate_limit:
       max_calls: 10

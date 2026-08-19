@@ -488,9 +488,19 @@ async def lifespan(app: Starlette) -> AsyncGenerator[None, None]:
         except Exception as e:
             logger.error(f"Error closing client '{name}': {e}")
 
+async def get_client_config(request: Request) -> JSONResponse:
+    """Returns runtime client configuration to the frontend Web UI."""
+    groq_key = os.getenv("GROQ_API_KEY", "")
+    return JSONResponse({
+        "groq_api_key": groq_key,
+        "default_model": "llama-3.1-8b-instant"
+    })
+
+
 routes = [
     Route("/", endpoint=serve_ui, methods=["GET"]),
     Route("/ui", endpoint=serve_ui, methods=["GET"]),
+    Route("/api/config", endpoint=get_client_config, methods=["GET"]),
     Route("/health", endpoint=health_check, methods=["GET"]),
     Route("/ready", endpoint=readiness_check, methods=["GET"]),
     Route("/mcp", endpoint=mcp_post_endpoint, methods=["POST"]),

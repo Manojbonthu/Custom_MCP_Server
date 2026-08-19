@@ -52,8 +52,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Allow open access to health and readiness probes, favicon, and Web UI
-        if request.url.path in ("/", "/ui", "/health", "/ready", "/healthz", "/favicon.ico"):
+        # Allow open access to health, config, favicon, and Web UI
+        if request.url.path in ("/", "/ui", "/health", "/ready", "/healthz", "/favicon.ico", "/api/config"):
             return await call_next(request)
 
         # Handle CORS preflight OPTIONS requests cleanly
