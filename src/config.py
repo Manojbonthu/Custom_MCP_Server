@@ -5,6 +5,7 @@ config.py — Typed dataclasses for server, authentication, security, and SMTP c
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
+import os
 import yaml
 
 
@@ -69,6 +70,18 @@ class AppConfig:
 _config: Optional[AppConfig] = None
 
 
+def _resolve_env(value):
+    """Resolve ${env:VAR} placeholders from the current environment."""
+    if isinstance(value, str) and value.startswith("${env:") and value.endswith("}"):
+        env_name = value[6:-1]
+        return os.environ.get(env_name, "")
+    if isinstance(value, dict):
+        return {k: _resolve_env(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_resolve_env(v) for v in value]
+    return value
+
+
 def load_config(config_path: str = "config.yaml") -> AppConfig:
     """Loads configuration dynamically from YAML file."""
     path = Path(config_path)
@@ -76,7 +89,7 @@ def load_config(config_path: str = "config.yaml") -> AppConfig:
         return AppConfig()
 
     with open(path, "r", encoding="utf-8") as f:
-        raw = yaml.safe_load(f) or {}
+        raw = _resolve_env(yaml.safe_load(f) or {})
 
     server_raw = raw.get("server", {})
     auth_raw = raw.get("auth", {})

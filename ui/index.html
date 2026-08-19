@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Groq AI + Streamable MCP Server | Ultra-Fast Agent Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg-primary: #060911;
@@ -38,13 +41,16 @@
       width: 6px;
       height: 6px;
     }
+
     ::-webkit-scrollbar-track {
       background: rgba(0, 0, 0, 0.2);
     }
+
     ::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.15);
       border-radius: 999px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(245, 80, 54, 0.4);
     }
@@ -57,45 +63,9 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
-      position: relative;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(245, 80, 54, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 60%);
-    }
-
-    /* Ambient Background Orbs */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -100px;
-      left: 20%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(245,80,54,0.15) 0%, transparent 70%);
-      pointer-events: none;
-      filter: blur(80px);
-      z-index: 0;
-      animation: floatGlow 12s infinite alternate ease-in-out;
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      bottom: -100px;
-      right: 15%;
-      width: 550px;
-      height: 550px;
-      background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
-      pointer-events: none;
-      filter: blur(90px);
-      z-index: 0;
-      animation: floatGlow 16s infinite alternate-reverse ease-in-out;
-    }
-
-    @keyframes floatGlow {
-      0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(30px, -40px) scale(1.1); }
+      background-image:
+        radial-gradient(circle at 15% 15%, rgba(245, 80, 54, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.09) 0%, transparent 45%);
     }
 
     /* ── Header ── */
@@ -185,130 +155,18 @@
       animation: pulseGlow 2s infinite;
     }
 
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px var(--accent-green); }
-      50% { opacity: 0.6; transform: scale(1.25); box-shadow: 0 0 18px var(--accent-green); }
-    }
+    @keyframes pulse {
 
-    /* ── Login Overlay Modal ── */
-    .login-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(4, 7, 14, 0.88);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      animation: fadeInModal 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
 
-    @keyframes fadeInModal {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .login-card {
-      background: rgba(11, 16, 29, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 20px;
-      padding: 2.25rem;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75), 0 0 45px rgba(245, 80, 54, 0.2);
-      display: flex;
-      flex-direction: column;
-      gap: 1.35rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .login-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--groq-gradient);
-    }
-
-    .login-header {
-      text-align: center;
-    }
-
-    .login-header h2 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 0.35rem;
-      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .login-header p {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-    }
-
-    .login-btn {
-      width: 100%;
-      background: var(--groq-gradient);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 0.82rem;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: 0 6px 20px rgba(245, 80, 54, 0.35);
-      letter-spacing: 0.01em;
-    }
-
-    .login-btn:hover {
-      opacity: 0.94;
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(245, 80, 54, 0.5);
-    }
-
-    .login-btn:active {
-      transform: translateY(0);
-    }
-
-    .login-error-msg {
-      font-size: 0.8rem;
-      color: #fca5a5;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      padding: 0.6rem 0.85rem;
-      border-radius: 8px;
-      text-align: center;
-      font-weight: 500;
-    }
-
-    .logout-btn {
-      background: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      padding: 0.4rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.76rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-
-    .logout-btn:hover {
-      background: rgba(239, 68, 68, 0.35);
-      color: #ffffff;
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
-      transform: translateY(-1px);
+      50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+      }
     }
 
     /* ── Main Layout ── */
@@ -373,7 +231,8 @@
       font-weight: 600;
     }
 
-    input, select {
+    input,
+    select {
       width: 100%;
       background: rgba(0, 0, 0, 0.5);
       border: 1px solid var(--border-color);
@@ -386,7 +245,8 @@
       transition: all 0.25s ease;
     }
 
-    input:focus, select:focus {
+    input:focus,
+    select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px var(--primary-glow);
       background: rgba(0, 0, 0, 0.65);
@@ -490,9 +350,16 @@
       animation: fadeInMsg 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes fadeInMsg {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .message-row.user {
@@ -557,7 +424,7 @@
       margin: 0.65rem 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.8rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .tool-execution-header {
@@ -678,42 +545,60 @@
       animation: bounce 1.4s infinite ease-in-out both;
     }
 
-    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+    .typing-indicator span:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: -0.16s;
+    }
 
     @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0); }
-      40% { transform: scale(1); }
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0);
+      }
+
+      40% {
+        transform: scale(1);
+      }
     }
 
     @media (max-width: 900px) {
       .app-container {
         grid-template-columns: 1fr;
       }
+
       aside {
         display: none;
       }
     }
   </style>
 </head>
+
 <body>
 
   <!-- Login Modal Overlay -->
   <div id="loginModalOverlay" class="login-modal-overlay">
     <div class="login-card">
       <div class="login-header">
-        <div class="logo-badge" style="margin: 0 auto 0.75rem auto; width: 50px; height: 50px; font-size: 1.5rem;">🔐</div>
+        <div class="logo-badge" style="margin: 0 auto 0.75rem auto; width: 50px; height: 50px; font-size: 1.5rem;">🔐
+        </div>
         <h2>MCP Server Login</h2>
         <p>Enter your Username & Password to access authorized tools</p>
       </div>
-      <form id="loginForm" onsubmit="handleLoginSubmit(event)" style="display:flex; flex-direction:column; gap:0.85rem;">
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)"
+        style="display:flex; flex-direction:column; gap:0.85rem;">
         <div class="form-group">
           <label for="loginUsername">Username</label>
           <input type="text" id="loginUsername" placeholder="Enter your username" required autocomplete="username" />
         </div>
         <div class="form-group">
           <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password" />
+          <input type="password" id="loginPassword" placeholder="Enter your password" required
+            autocomplete="current-password" />
         </div>
         <div id="loginErrorMsg" class="login-error-msg" style="display:none;"></div>
         <button type="submit" class="login-btn" id="loginBtn">Sign In to Agent Hub</button>
@@ -739,26 +624,16 @@
   </header>
 
   <div class="app-container">
-    
+
     <!-- Left Sidebar: Configuration & MCP Tools -->
     <aside>
       <div class="sidebar-section">
-        <h2>⚡ Groq API Configuration</h2>
+        <h2>⚡ Backend Agent Status</h2>
         <div class="config-card">
-          <div class="form-group">
-            <label for="groqApiKey">Groq API Key</label>
-            <input type="password" id="groqApiKey" placeholder="gsk_..." />
-          </div>
-          <div class="form-group">
-            <label for="groqModel">Model</label>
-            <select id="groqModel">
-              <option value="llama-3.1-8b-instant" selected>llama-3.1-8b-instant (Recommended — Tool Calling & Fast)</option>
-              <option value="llama3-70b-8192">llama3-70b-8192 (Tool Calling — High Accuracy)</option>
-              <option value="llama3-8b-8192">llama3-8b-8192 (Tool Calling)</option>
-              <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b (Deep Reasoning)</option>
-              <option value="gemma2-9b-it">gemma2-9b-it (General Chat)</option>
-            </select>
-          </div>
+          <p style="font-size: 0.75rem; color: var(--text-muted);">The backend is actively running
+            <strong>AgentRuntime</strong>. LLM inferences are safely executed on the server via native Gemini/Groq SDKs.
+            Zero client keys required!
+          </p>
         </div>
       </div>
 
@@ -768,14 +643,18 @@
           <div style="display:flex; flex-direction:column; gap:0.75rem;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
               <div style="overflow:hidden;">
-                <div id="loggedInUserTitle" style="font-weight:700; font-size:0.92rem; color:var(--text-main); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">👤 Not Logged In</div>
-                <div id="loggedInUserRoleDesc" style="font-size:0.75rem; color:var(--text-muted);">Please sign in to access tools.</div>
+                <div id="loggedInUserTitle"
+                  style="font-weight:700; font-size:0.92rem; color:var(--text-main); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
+                  👤 Not Logged In</div>
+                <div id="loggedInUserRoleDesc" style="font-size:0.75rem; color:var(--text-muted);">Please sign in to
+                  access tools.</div>
               </div>
               <button id="logoutBtn" onclick="handleLogout()" class="logout-btn">Logout</button>
             </div>
             <input type="hidden" id="mcpToken" value="" />
             <input type="hidden" id="mcpEndpoint" value="http://localhost:8100/mcp" />
-            <div id="roleAccessBadge" style="font-size:0.73rem; color:var(--accent-green); background:rgba(16,185,129,0.1); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
+            <div id="roleAccessBadge"
+              style="font-size:0.73rem; color:var(--accent-green); background:rgba(16,185,129,0.1); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
               🛡️ Status: <strong>Checking Session...</strong>
             </div>
           </div>
@@ -783,9 +662,22 @@
       </div>
 
       <div class="sidebar-section">
-        <h2>🛠️ Visible MCP Tools (<span id="toolCount">2</span>)</h2>
+        <h2>🛠️ Connected MCP Tools (<span id="toolCount">2</span>)</h2>
         <div style="display: flex; flex-direction: column; gap: 0.6rem;" id="toolsList">
-          <!-- Dynamically populated based on caller RBAC permissions -->
+          <div class="tool-chip">
+            <div class="tool-header">
+              <span class="tool-name">get_current_datetime</span>
+              <span class="tool-tag">Host Time</span>
+            </div>
+            <p class="tool-desc">Direct host laptop OS clock + IANA timezone converter.</p>
+          </div>
+          <div class="tool-chip">
+            <div class="tool-header">
+              <span class="tool-name">send_email</span>
+              <span class="tool-tag">SMTP Live</span>
+            </div>
+            <p class="tool-desc">Server-side SMTP dispatcher with allowlist & injection guard.</p>
+          </div>
         </div>
       </div>
 
@@ -798,10 +690,12 @@
           <button class="prompt-pill" onclick="sendQuickPrompt('What time is it in Tokyo and London?')">
             🌍 What time is it in Tokyo and London?
           </button>
-          <button class="prompt-pill" onclick="sendQuickPrompt('Send an email to bonthumanoj999@gmail.com stating that our MCP server is online and operational.')">
+          <button class="prompt-pill"
+            onclick="sendQuickPrompt('Send an email to bonthumanoj999@gmail.com stating that our MCP server is online and operational.')">
             📧 Send an email alert to Manoj
           </button>
-          <button class="prompt-pill" onclick="sendQuickPrompt('Explain why Groq LPUs are so fast compared to traditional GPUs.')">
+          <button class="prompt-pill"
+            onclick="sendQuickPrompt('Explain why Groq LPUs are so fast compared to traditional GPUs.')">
             ⚡ Why are Groq LPUs so fast?
           </button>
         </div>
@@ -811,17 +705,20 @@
     <!-- Main Chat Workspace -->
     <main>
       <div class="chat-messages" id="chatMessages">
-        
+
         <!-- Welcome Message -->
         <div class="message-row assistant">
           <div class="avatar groq">G</div>
           <div class="message-bubble">
             <p><strong>Welcome to the Groq AI Agent Hub!</strong></p>
             <p style="margin-top: 0.35rem; color: var(--text-muted);">
-              Powered by ultra-fast <strong>Groq LPU™ Inference</strong> and connected directly to your <strong>Streamable MCP Server</strong>. Ask any question in the world, and Groq will automatically invoke your local tools to check the <strong>hardware system clock</strong> or dispatch <strong>live SMTP emails</strong>.
+              Powered by ultra-fast <strong>Groq LPU™ Inference</strong> and connected directly to your
+              <strong>Streamable MCP Server</strong>. Ask any question in the world, and Groq will automatically invoke
+              your local tools to check the <strong>hardware system clock</strong> or dispatch <strong>live SMTP
+                emails</strong>.
             </p>
             <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--accent-cyan);">
-              🔑 Please enter your Groq API Key (from <a href="https://console.groq.com/keys" target="_blank" style="color:var(--primary);text-decoration:underline;">console.groq.com</a>) in the left sidebar to begin!
+              🚀 Backend connection established. Zero client API keys needed.
             </p>
           </div>
         </div>
@@ -833,7 +730,9 @@
         <div class="input-box-container">
           <textarea id="userInput" placeholder="Ask Groq anything or execute an MCP tool..." rows="1"></textarea>
           <button class="send-btn" id="sendBtn" onclick="handleUserSend()">
-            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <svg viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
           </button>
         </div>
       </div>
@@ -870,57 +769,15 @@ INSTRUCTIONS:
     let isGenerating = false;
     let mcpToolsSchema = [];
 
-    // Load saved API key from localStorage
-    const savedKey = localStorage.getItem("GROQ_API_KEY");
-    if (savedKey) {
-      document.getElementById("groqApiKey").value = savedKey;
-      fetchAvailableGroqModels(savedKey);
-    }
-
-    document.getElementById("groqApiKey").addEventListener("change", (e) => {
-      const key = e.target.value.trim();
-      localStorage.setItem("GROQ_API_KEY", key);
-      if (key) fetchAvailableGroqModels(key);
-    });
-
-    async function fetchAvailableGroqModels(apiKey) {
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const select = document.getElementById("groqModel");
-          const chatModels = data.data
-            .filter(m => m.active && !m.id.includes("whisper") && !m.id.includes("guard") && !m.id.includes("tts"))
-            .sort((a, b) => a.id.localeCompare(b.id));
-
-          if (chatModels.length > 0) {
-            const currentVal = select.value;
-            select.innerHTML = "";
-            chatModels.forEach(m => {
-              const opt = document.createElement("option");
-              opt.value = m.id;
-              opt.textContent = m.id;
-              if (m.id.includes("qwen") || m.id.includes("gpt") || m.id.includes("llama-3.1-8b") || m.id === currentVal) {
-                opt.selected = true;
-              }
-              select.appendChild(opt);
-            });
-          }
-        }
-      } catch (err) {
-        console.warn("Could not auto-fetch Groq models:", err);
-      }
-    }
+    // Removed local Groq logic as the backend AgentRuntime now handles all inference!
 
     // Auto-expand textarea
     const textarea = document.getElementById("userInput");
-    textarea.addEventListener("input", function() {
+    textarea.addEventListener("input", function () {
       this.style.height = "auto";
       this.style.height = (this.scrollHeight) + "px";
     });
-    textarea.addEventListener("keydown", function(e) {
+    textarea.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleUserSend();
@@ -983,7 +840,7 @@ INSTRUCTIONS:
       document.getElementById("loggedInUserTitle").textContent = "👤 Not Logged In";
       document.getElementById("loggedInUserRoleDesc").textContent = "Please sign in to access tools.";
       document.getElementById("mcpToken").value = "";
-      
+
       const badge = document.getElementById("roleAccessBadge");
       badge.style.color = "var(--accent-red)";
       badge.style.borderColor = "var(--accent-red)";
@@ -1006,16 +863,6 @@ INSTRUCTIONS:
     async function fetchMCPTools() {
       const endpoint = document.getElementById("mcpEndpoint").value.trim() || "http://localhost:8100/mcp";
       const token = document.getElementById("mcpToken").value.trim();
-      const toolsListEl = document.getElementById("toolsList");
-      
-      if (!token) {
-        mcpToolsSchema = [];
-        document.getElementById("toolCount").textContent = "0";
-        document.getElementById("serverStatusText").textContent = "Authentication Required";
-        document.getElementById("serverStatusBadge").style.color = "var(--accent-amber)";
-        toolsListEl.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); padding:0.5rem; text-align:center;">🔒 Log in to view authorized MCP tools.</div>`;
-        return;
-      }
 
       try {
         const res = await fetch(endpoint, {
@@ -1037,36 +884,9 @@ INSTRUCTIONS:
           document.getElementById("toolCount").textContent = mcpToolsSchema.length;
           document.getElementById("serverStatusText").textContent = `MCP Connected (${mcpToolsSchema.length} tools available)`;
           document.getElementById("serverStatusBadge").style.color = "var(--accent-green)";
-
-          // Render dynamic tool chips
-          toolsListEl.innerHTML = "";
-          if (mcpToolsSchema.length === 0) {
-            toolsListEl.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); padding:0.5rem; text-align:center;">🔒 No tools permitted for this role.</div>`;
-          } else {
-            mcpToolsSchema.forEach(tool => {
-              const chip = document.createElement("div");
-              chip.className = "tool-chip";
-              chip.innerHTML = `
-                <div class="tool-header">
-                  <span class="tool-name">${tool.name}</span>
-                  <span class="tool-tag">${tool.name.includes("datetime") ? "Host Time" : "SMTP Live"}</span>
-                </div>
-                <p class="tool-desc">${tool.description}</p>
-              `;
-              toolsListEl.appendChild(chip);
-            });
-          }
-        } else {
-          mcpToolsSchema = [];
-          document.getElementById("toolCount").textContent = "0";
-          document.getElementById("serverStatusText").textContent = "Auth Failed / Unauthorized";
-          document.getElementById("serverStatusBadge").style.color = "var(--accent-red)";
-          toolsListEl.innerHTML = `<div style="font-size:0.75rem; color:var(--accent-red); padding:0.5rem; background:rgba(239,68,68,0.1); border-radius:6px;">🚫 ${data.error?.message || "Unauthorized Token"}</div>`;
         }
       } catch (err) {
         console.warn("Could not discover MCP tools:", err);
-        document.getElementById("serverStatusText").textContent = "Server Offline";
-        document.getElementById("serverStatusBadge").style.color = "var(--accent-amber)";
       }
     }
 
@@ -1105,118 +925,56 @@ INSTRUCTIONS:
     }
 
     // ── Main Chat & Dual-Mode Tool Calling Loop ──
-    async function handleUserSend() {
+    async function handleUserSend(approvalStepId = null, overrideText = null) {
       if (isGenerating) return;
       const inputEl = document.getElementById("userInput");
-      const userText = inputEl.value.trim();
+      const userText = overrideText || inputEl.value.trim();
       if (!userText) return;
-      const userLower = userText.toLowerCase();
 
-      const apiKey = document.getElementById("groqApiKey").value.trim();
-      if (!apiKey) {
-        alert("Please enter your API Key in the left sidebar!");
-        return;
+      const endpoint = document.getElementById("mcpEndpoint").value.trim();
+      const token = document.getElementById("mcpToken").value.trim();
+
+      if (!approvalStepId) {
+        appendMessage("user", userText);
+        inputEl.value = "";
+        inputEl.style.height = "24px";
+      } else {
+        appendMessage("user", "👍 Approved action.");
       }
 
-      // Add user message to UI
-      appendMessage("user", userText);
-      inputEl.value = "";
-      inputEl.style.height = "24px";
       isGenerating = true;
       document.getElementById("sendBtn").disabled = true;
 
-      // Add typing bubble
       const typingBubbleId = appendTypingIndicator();
 
-      // Convert MCP tool schemas to OpenAI/Groq Tool Format
-      const groqTools = mcpToolsSchema.map(tool => ({
-        type: "function",
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.inputSchema || { type: "object", properties: {} }
-        }
-      }));
-
-      // Append user message to history
-      conversationMessages.push({
-        role: "user",
-        content: userText
-      });
-
       try {
-        const model = document.getElementById("groqModel").value;
-        const groqUrl = "https://api.groq.com/openai/v1/chat/completions";
-
-        let requestBody = {
-          model: model,
-          messages: conversationMessages,
-          tools: groqTools.length > 0 ? groqTools : undefined,
-          tool_choice: "auto",
-          temperature: 0.2
-        };
-
-        let response = await fetch(groqUrl, {
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
+            "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Date.now(),
+            method: "agent_request",
+            params: {
+              request: userText,
+              approval_step_id: approvalStepId
+            }
+          })
         });
 
-        let data = await response.json();
-
-        // If the model does not support native tools parameter, retry cleanly without it
-        if (data.error && data.error.message && (data.error.message.includes("tool") || data.error.message.includes("support"))) {
-          delete requestBody.tools;
-          delete requestBody.tool_choice;
-          response = await fetch(groqUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(requestBody)
-          });
-          data = await response.json();
-        }
-
+        const data = await response.json();
         removeTypingIndicator(typingBubbleId);
 
         if (data.error) {
-          appendMessage("assistant", `❌ **API Error:** ${data.error.message || JSON.stringify(data.error)}`);
-          isGenerating = false;
-          document.getElementById("sendBtn").disabled = false;
+          appendMessage("assistant", `❌ **Agent Error:** ${data.error.message || JSON.stringify(data.error)}`);
           return;
         }
 
-        let choice = data.choices?.[0];
-        let message = choice?.message;
-
-        // If the model returned empty content because tools were attached, re-query cleanly for general conversation
-        if ((!message?.tool_calls || message.tool_calls.length === 0) && (!message?.content || message.content.trim() === "")) {
-          try {
-            let directRes = await fetch(groqUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
-              },
-              body: JSON.stringify({
-                model: model,
-                messages: conversationMessages,
-                temperature: 0.4
-              })
-            });
-            let directData = await directRes.json();
-            if (directData.choices?.[0]?.message) {
-              message = directData.choices[0].message;
-            }
-          } catch (e) {
-            console.warn("Direct query retry error:", e);
-          }
-        }
+        const choice = data.choices?.[0];
+        const message = choice?.message;
 
         // 1. Check for Native Tool Calls
         if (message?.tool_calls && message.tool_calls.length > 0) {
@@ -1264,7 +1022,7 @@ INSTRUCTIONS:
           appendMessage("assistant", finalReply);
           conversationMessages.push({ role: "assistant", content: finalReply });
 
-        // 2. Check for Text-based JSON Tool Action Blocks or Natural Intent Fallback
+          // 2. Check for Text-based JSON Tool Action Blocks or Natural Intent Fallback
         } else {
           let shouldCallTool = false;
           let targetTool = "";
@@ -1276,65 +1034,24 @@ INSTRUCTIONS:
 
           // 1. Explicit Send Email Command
           if (isSendCommand && (userLower.includes("email") || userLower.includes("mail") || userLower.includes("alert") || userLower.includes("@"))) {
-            const KNOWN_DIRECTORY = {
-              "manoj": "bonthumanoj999@gmail.com",
-              "bonthu": "bonthumanoj999@gmail.com",
-              "vishal": "vishalreddykonreddy@gmail.com",
-              "vinod": "vinod@company.com",
-              "ops": "ops@company.com",
-              "manager": "manager@company.com",
-              "alerts": "alerts@company.com"
-            };
-
-            let recipient = null;
-            const emailMatch = userText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-            
-            if (emailMatch) {
-              recipient = emailMatch[0];
-            } else {
-              for (const [key, addr] of Object.entries(KNOWN_DIRECTORY)) {
-                if (userLower.includes(key)) {
-                  recipient = addr;
-                  break;
-                }
-              }
-            }
-
-            if (!recipient) {
-              removeTypingIndicator(typingBubbleId);
-              let requestedTarget = "the specified recipient";
-              const toMatch = userLower.match(/(?:to|email|mail|send|notify)\s+([a-zA-Z0-9_-]+)/);
-              if (toMatch && toMatch[1] && !["email", "mail", "message", "alert", "an"].includes(toMatch[1])) {
-                requestedTarget = `'${toMatch[1]}'`;
-              }
-
-              appendMessage("assistant", 
-                `⚠️ **Recipient Not Found / Not Authorized**\n\n` +
-                `The recipient **${requestedTarget}** is not in the authorized email directory.\n\n` +
-                `**Authorized Email Directory:**\n` +
-                `- 📧 **Manoj**: \`bonthumanoj999@gmail.com\`\n` +
-                `- 📧 **Vishal**: \`vishalreddykonreddy@gmail.com\`\n` +
-                `- 📧 **Vinod**: \`vinod@company.com\`\n` +
-                `- 📧 **Ops**: \`ops@company.com\`\n` +
-                `- 📧 **Manager**: \`manager@company.com\`\n` +
-                `- 📧 **Alerts**: \`alerts@company.com\`\n` +
-                `- Or any explicit email address ending in \`@trusteddomain.com\`\n\n` +
-                `*No email was sent.*`
-              );
-              isGenerating = false;
-              document.getElementById("sendBtn").disabled = false;
-              return;
-            }
-
             shouldCallTool = true;
             targetTool = "send_email";
+
+            let recipient = "bonthumanoj999@gmail.com";
+            if (userLower.includes("vishal") || userLower.includes("vishalreddykonreddy")) {
+              recipient = "vishalreddykonreddy@gmail.com";
+            } else {
+              const emailMatch = userText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              if (emailMatch) recipient = emailMatch[0];
+            }
+
             targetArgs = {
               to: recipient,
               subject: "Alert Notification from MCP Web Agent",
               body: `Hello!\n\nThis message was triggered from your Groq AI Chat Interface.\nUser prompt: "${userText}"\nDispatched via: Model Context Protocol (MCP) Server`
             };
 
-          // 2. Explicit Time Query
+            // 2. Explicit Time Query
           } else if ((userLower.includes("time") || userLower.includes("date") || userLower.includes("clock")) && !isInfoQuery) {
             shouldCallTool = true;
             targetTool = "get_current_datetime";
@@ -1374,16 +1091,15 @@ INSTRUCTIONS:
             if (!replyText || replyText.trim() === "") {
               if (userLower.includes("whom") || userLower.includes("who") || userLower.includes("mail") || userLower.includes("recipient") || userLower.includes("allowlist")) {
                 replyText = `You can send email notifications to any of the authorized recipients configured on the server:\n\n` +
-                            `1. 📧 **bonthumanoj999@gmail.com** (Manoj Bonthu)\n` +
-                            `2. 📧 **vishalreddykonreddy@gmail.com** (Vishal Reddy)\n` +
-                            `3. 📧 **vinod@company.com** (Vinod)\n` +
-                            `4. 📧 **ops@company.com** (Operations Team)\n` +
-                            `5. 📧 **manager@company.com** (Management Team)\n` +
-                            `6. 📧 **alerts@company.com** (System Alerts)\n` +
-                            `7. 📧 **\*@trusteddomain.com** (Any email under trusted domains)\n\n` +
-                            `To send an email, simply ask: *"Send an email to vishal with status update"*`;
+                  `1. 📧 **bonthumanoj999@gmail.com** (Manoj Bonthu)\n` +
+                  `2. 📧 **vishalreddykonreddy@gmail.com** (Vishal Reddy)\n` +
+                  `3. 📧 **ops@company.com** (Operations Team)\n` +
+                  `4. 📧 **manager@company.com** (Management Team)\n` +
+                  `5. 📧 **alerts@company.com** (System Alerts)\n` +
+                  `6. 📧 **\*@trusteddomain.com** (Any email under trusted domains)\n\n` +
+                  `To send an email, simply ask: *"Send an email to bonthumanoj999@gmail.com with status update"*`;
               } else {
-                replyText = "⚠️ The AI model returned an empty response. Please check your Groq API Key in the left sidebar or select a different model like **llama-3.1-8b-instant** or **llama3-70b-8192**.";
+                replyText = "Hello! I am your AI agent connected to your Streamable MCP Server. How can I assist you today?";
               }
             }
             appendMessage("assistant", replyText);
@@ -1393,7 +1109,7 @@ INSTRUCTIONS:
 
       } catch (err) {
         removeTypingIndicator(typingBubbleId);
-        appendMessage("assistant", `❌ **Error:** Failed to connect. ${err.message}`);
+        appendMessage("assistant", `❌ **Error:** Failed to connect to local Agent. ${err.message}`);
       } finally {
         isGenerating = false;
         document.getElementById("sendBtn").disabled = false;
@@ -1405,7 +1121,7 @@ INSTRUCTIONS:
       const container = document.getElementById("chatMessages");
       const row = document.createElement("div");
       row.className = `message-row ${role}`;
-      
+
       const avatar = document.createElement("div");
       avatar.className = `avatar ${role === "user" ? "user" : "groq"}`;
       avatar.textContent = role === "user" ? "👤" : "G";
@@ -1489,4 +1205,5 @@ INSTRUCTIONS:
     }
   </script>
 </body>
+
 </html>
