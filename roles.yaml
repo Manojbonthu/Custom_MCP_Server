@@ -6,6 +6,18 @@ roles:
     allow: ["*"]
     deny: []
     maxClassification: "secret"
+    
+  standard-role:
+    description: "Standard agent role with specified capabilities"
+    allow: ["get_current_datetime", "send_email"]
+    deny: []
+    maxClassification: "secret"
+    
+  restricted-role:
+    description: "Restricted role strictly limited to specific tools"
+    allow: ["get_current_datetime"]
+    deny: ["send_email"]
+    maxClassification: "public"
 
 classificationLevels:
   - name: public

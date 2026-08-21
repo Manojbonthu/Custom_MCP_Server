@@ -48,10 +48,7 @@ _SERVER_START_TIME = time.time()
 # ── Pydantic Input Schemas ──────────────────────────────────────────────────
 
 class GetCurrentDateTimeInput(BaseModel):
-    timezone: Optional[str] = Field(
-        None,
-        description="Optional IANA timezone name (e.g. 'UTC', 'America/New_York', 'Asia/Kolkata', 'Europe/London'). Defaults to host local time.",
-    )
+    pass
 
 
 class ConvertTimezoneInput(BaseModel):
@@ -67,21 +64,9 @@ class GetSystemUptimeInput(BaseModel):
 # ── Tool Implementations ────────────────────────────────────────────────────
 
 async def handle_get_current_datetime(data: GetCurrentDateTimeInput, caller: Optional[str] = None) -> dict:
-    req_tz = (data.timezone or "").strip()
-
-    if req_tz:
-        try:
-            tz = zoneinfo.ZoneInfo(req_tz)
-            now = datetime.now(tz)
-            tz_name = req_tz
-        except Exception:
-            # Fallback to UTC
-            now = datetime.now(timezone.utc)
-            tz_name = "UTC (fallback from invalid timezone)"
-    else:
-        # System local time
-        now = datetime.now().astimezone()
-        tz_name = str(now.tzinfo) or "System Local"
+    # System local time default
+    now = datetime.now().astimezone()
+    tz_name = str(now.tzinfo) or "System Local"
 
     return {
         "status": "success",
@@ -91,7 +76,6 @@ async def handle_get_current_datetime(data: GetCurrentDateTimeInput, caller: Opt
         "epoch_timestamp": now.timestamp(),
         "server": "Time & System MCP Server (:8102)",
     }
-
 
 TZ_ABBREVIATIONS: Dict[str, str] = {
     "EST": "America/New_York",
@@ -202,15 +186,13 @@ async def handle_get_system_uptime(data: GetSystemUptimeInput, caller: Optional[
 
 # ── Tool Definitions Registry ───────────────────────────────────────────────
 
-TIME_TOOLS = [
+TIME_TOOLS: List[Dict[str, Any]] = [
     {
         "name": "get_current_datetime",
-        "description": "Returns the current live host system date and time with optional IANA timezone conversion (e.g. 'UTC', 'Asia/Kolkata', 'America/New_York').",
+        "description": "Returns the current live host system date and time (Local System Zone only).",
         "inputSchema": {
             "type": "object",
-            "properties": {
-                "timezone": {"type": "string", "description": "Optional IANA timezone name (e.g. 'UTC', 'Asia/Kolkata', 'America/New_York', 'Europe/London')."},
-            },
+            "properties": {},
             "required": [],
         },
         "model_cls": GetCurrentDateTimeInput,

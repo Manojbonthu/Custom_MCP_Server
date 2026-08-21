@@ -827,7 +827,7 @@
 - create_draft(to, subject, body): Creates an email draft in Gmail.
 
 🕒 TIME & SYSTEM MCP SERVER (:8102):
-- get_current_datetime(timezone): Reads current host system clock with timezone support.
+- get_current_datetime(): Reads current host system clock (Local System Zone only). No timezone parameter is accepted!
 - convert_timezone(time_str, from_tz, to_tz): Converts a timestamp between timezones.
 - get_system_uptime(): Returns server uptime and OS platform status.
 
@@ -839,9 +839,10 @@ NAME & RECIPIENT DIRECTORY:
 CRITICAL TOOL INVOCATION RULES:
 1. When the user says 'send the mail to manoj' or 'send mail to vishal' or provides an explicit email address, DO NOT ask them for missing subject/body. Immediately compose a polite message (e.g. subject='Message from Groq AI', body='Hi, hope you are doing well!') and CALL send_email(to, subject, body) immediately!
 2. If the user asks to send an email to an unknown name (e.g. 'kunnu') without providing an email address, tell them you need their email address.
-3. When the user asks for time/clock/date, CALL get_current_datetime(timezone) immediately!
+3. When the user asks for time/clock/date, CALL get_current_datetime() immediately!
 4. When the user asks which emails can be sent or asks about allowed emails, list the authorized allowlist recipients.
-5. For general conversation ('hi', sports, coding), respond conversationally.`
+5. IF a tool call returns a "Forbidden" error, it means you do not have permission. You MUST NOT try to answer the query using your own internal knowledge. You MUST apologize and state clearly that you do not have the required security clearance for that action.
+6. For general conversation ('hi', sports, coding), respond conversationally.`
       }
     ];
     let isGenerating = false;
@@ -1142,7 +1143,8 @@ CRITICAL TOOL INVOCATION RULES:
 
     // ── Execute MCP Tool with Dynamic Routing ──
     async function executeMCPTool(name, args) {
-      const targetServerUrl = toolServerMap[name] || "http://localhost:8100/mcp";
+      // Force all execution through master gateway port 8100 so RBAC is enforced
+      const targetServerUrl = "http://localhost:8100/mcp";
       const token = document.getElementById("mcpToken").value.trim();
 
       const res = await fetch(targetServerUrl, {

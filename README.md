@@ -97,13 +97,68 @@ Custom_MCP_Server/
 * `.env`: Environment variables (holds JWT_SECRET, OpenBao Tokens). **MUST NEVER BE COMMITTED WITH REAL SECRETS.**
 * `.env.example`: Template for developers.
 
-## 9. INSTALLATION / SETUP
-**CURRENT Prerequisites**: Python 3.11+, HashiCorp OpenBao (Vault).
-1. `pip install -r requirements.txt`
-2. Configure `.env` using `.env.example`.
-3. Install OpenBao locally and run `bash scripts/local-dev-openbao.sh` to populate AppRoles.
-4. Inject `OPENBAO_ROLE_ID=<role-id>` and `OPENBAO_SECRET_ID=<secret-id>` into `.env`.
-5. Generate a JWT: `python scripts/generate_jwt.py admin` and place it in the `.env` or UI script.
+## 9. INSTALLATION / SETUP (FIRST-TIME RUN)
+**Prerequisites**: Python 3.11+, HashiCorp OpenBao (Vault Fork).
+
+### A. Install OpenBao
+OpenBao is required for securely managing SMTP credentials.
+1. Download the latest release of OpenBao for your OS from the official repository: [OpenBao Releases (GitHub)](https://github.com/openbao/openbao/releases).
+2. Extract the executable (`bao.exe` on Windows or `bao` on Linux/macOS).
+3. Add the extracted package's folder to your system's `PATH` environment variable so you can run `bao` from anywhere.
+4. Verify installation by running: `bao --version`.
+
+### B. Python Setup
+1. Create a virtual environment (optional but recommended): `python -m venv .venv` and activate it.
+2. Install dependencies: `pip install -r requirements.txt`
+3. Copy the environment template: `cp .env.example .env` (fill in your LLM API keys for Groq/Gemini).
+
+### C. Configure OpenBao Identity (Getting Role ID & Secret ID)
+1. Start the OpenBao development server in a new terminal:
+   ```bash
+   bao server -dev
+   ```
+2. In the OpenBao server output, copy the **Root Token** (starts with `s.`). Ensure you leave this terminal running!
+3. Open a separate terminal and authenticate your CLI with the root token:
+   ```bash
+   # On Linux/macOS/Git Bash:
+   export BAO_TOKEN="s.YOUR_ROOT_TOKEN_HERE"
+   
+   # On Windows PowerShell:
+   $env:BAO_TOKEN="s.YOUR_ROOT_TOKEN_HERE"
+   ```
+4. Run the credentials payload script to generate the AppRole securely (on Windows, use Git Bash/WSL):
+   ```bash
+   bash scripts/local-dev-openbao.sh
+   ```
+   **Alternative for Windows Users (Manual Method):** If you cannot run the bash script, run the following OpenBao CLI commands:
+   ```powershell
+   # 1. Enable AppRole
+   bao auth enable approle
+
+   # 2. Create the mcp-agent role
+   bao write auth/approle/role/mcp-agent token_ttl=1h token_max_ttl=24h
+
+   # 3. Get the Role ID
+   bao read -field=role_id auth/approle/role/mcp-agent/role-id
+
+   # 4. Generate a new Secret ID
+   bao write -f -field=secret_id auth/approle/role/mcp-agent/secret-id
+   ```
+
+5. **Update `.env`**: Whether you used the bash script or manual commands, copy the resulting **Role ID** and **Secret ID** values and paste them into your `.env` file for `OPENBAO_ROLE_ID=` and `OPENBAO_SECRET_ID=`.
+
+### D. Populate Secrets in OpenBao
+Because running `bao server -dev` wipes its memory every time it is restarted, you must physical store credentials into the vault before the python servers can fetch them. 
+
+Once your vault is running, run this command in your terminal to insert SMTP test credentials:
+```bash
+bao kv put secret/mcp/smtp username="dummy-user" password="dummy-password"
+```
+*(If you are setting up other tools in the future, you can similarly run `bao kv put secret/mcp/toolname...` thanks to the flexible wildcard policy setup).*
+
+### E. Generate JWT for the Application
+1. Generate an identity token for the dashboard: `python scripts/generate_jwt.py admin`
+2. You will use this token in the UI or headers to authenticate against the MCP Server.
 
 ## 10. HOW TO RUN
 - **Start whole cluster**: `python run_servers.py`
@@ -148,3 +203,20 @@ Logs `authorization_allowed`, `authorization_denied`, `authentication_failure`.
 ## 16. FUTURE WORK / PLANNED
 - [FUTURE] **Cloud Workload Identity**: Deprecate `.env` usage natively in favor of true Kubernetes `serviceaccount` injection files for Vault authentication.
 - [FUTURE] **Cloud IDP**: Retire hardcoded JSON Web Tokens in `index.html` by enforcing an Okta/Auth0 integration inside the front-end login component.
+
+## 17. TROUBLESHOOTING
+
+### OpenBao ConnectionError / Credential Failure
+If you see `Failed to authenticate with OpenBao: ConnectionError` in the logs, it means the OpenBao development server has stopped or reset, wiping your in-memory credentials.
+
+**To Fix:**
+1. **Remove Old IDs**: In your `.env` file, delete the `OPENBAO_ROLE_ID=` and `OPENBAO_SECRET_ID=` lines.
+2. **Start OpenBao**: Open a new terminal and run `bao server -dev`. Leave this running.
+3. **Copy Root Token**: Look at the startup output of the OpenBao server and copy the Root Token (usually starts with `s.`).
+4. **Run Setup Script**: In a separate terminal, export the token and run the setup script:
+   ```bash
+   export BAO_TOKEN="s.YOUR_NEW_ROOT_TOKEN_HERE"
+   bash scripts/local-dev-openbao.sh
+   ```
+5. **Update `.env`**: The script will output a `.env.local` file. Copy the fresh `OPENBAO_ROLE_ID` and `OPENBAO_SECRET_ID` from it and paste them back into your `.env`.
+6. **Restart**: Restart your MCP servers (`python run_servers.py`).
